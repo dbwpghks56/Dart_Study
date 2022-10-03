@@ -1,0 +1,285 @@
+// Copyright 2019 the Dart project authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license
+// that can be found in the LICENSE file.
+
+import 'dart:math' as math;
+import 'package:flutter/material.dart';
+
+Color primaryColor = Colors.white;
+const TargetPlatform platform = TargetPlatform.android;
+
+void main() {
+  runApp(Sunflower());
+}
+
+class SunflowerPainter extends CustomPainter {
+  static const seedRadius = 2.0;
+  static const scaleFactor = 3;
+  static const tau = math.pi * 2;
+
+  static final phi = (math.sqrt(5) + 1) / 2;
+
+  final int seeds;
+
+  SunflowerPainter(this.seeds);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = size.width / 2;
+
+    for (var i = 0; i < seeds; i++) {
+      final theta = i * tau / phi;
+      final r = math.sqrt(i) * scaleFactor;
+      final x = center + r * math.cos(theta);
+      final y = center - r * math.sin(theta);
+      final offset = Offset(x, y);
+      if (!size.contains(offset)) {
+        continue;
+      }
+      drawSeed(canvas, x, y);
+    }
+  }
+
+  @override
+  bool shouldRepaint(SunflowerPainter oldDelegate) {
+    return oldDelegate.seeds != seeds;
+  }
+
+  // Draw a small circle representing a seed centered at (x,y).
+  void drawSeed(Canvas canvas, double x, double y) {
+    final paint = Paint()
+      ..strokeWidth = 2
+      ..style = PaintingStyle.fill
+      ..color = primaryColor;
+    canvas.drawCircle(Offset(x, y), seedRadius, paint);
+  }
+}
+
+class Sunflower extends StatefulWidget {
+  @override
+  State<StatefulWidget> createState() {
+    return _SunflowerState();
+  }
+}
+
+class _SunflowerState extends State<Sunflower> {
+  double seeds = 100.0;
+  String fname = "꽃이 활짝 *";
+  int get seedCount => seeds.floor();
+  
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData().copyWith(
+        platform: platform,
+        brightness: Brightness.dark,
+        sliderTheme: SliderThemeData.fromPrimaryColors(
+          primaryColor: primaryColor,
+          primaryColorLight: primaryColor,
+          primaryColorDark: primaryColor,
+          valueIndicatorTextStyle: const DefaultTextStyle.fallback().style,
+        ),
+      ),
+      home: Scaffold(
+        appBar: AppBar(
+          title: const Text("Sunflower"),
+        ),
+        drawer: Drawer(
+          child: ListView(
+            children: [
+              DrawerHeader(
+                child: Center(
+                  child: Text(
+                    "Sunflower 🌻",
+                    style: TextStyle(fontSize: 32),
+                  ),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    seeds += 100;
+                  });
+                },
+                child: Text("test1", style: TextStyle(color: Colors.black),),
+                style: ElevatedButton.styleFrom(
+                  primary: Colors.greenAccent,
+                  textStyle: TextStyle(color: Colors.black, fontSize: 30),
+                  
+                ),
+        
+              ),
+              ListTile(
+                title: Text("test2"),
+                onLongPress: () {
+                  setState(() {
+                    if(seeds >= 2000) {
+                      seeds -= 200;
+                      fname = "잎 하나 떨어진다.";
+                    }
+                    else {
+                      seeds += 200;
+                      fname = "다시 붙는다.";
+                    }
+                  });
+                },
+              ),
+             ]
+          ),
+        ),
+        body: Container(
+          constraints: const BoxConstraints.expand(),
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: Colors.transparent,
+            ),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment(0.8, 1),
+              colors: <Color>[
+                Colors.purpleAccent,
+                Colors.blueAccent,
+                Colors.greenAccent,
+              ],
+              tileMode: TileMode.mirror,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: Colors.transparent,
+                  ),
+                ),
+                child: SizedBox(
+                  width: 400,
+                  height: 400,
+                  child: CustomPaint(
+                    painter: SunflowerPainter(seedCount),
+                  ),
+                ),
+              ),
+              Text("Showing $seedCount seeds"),
+              Text(fname),
+              ElevatedButton(
+                child: const Text("click me!"),
+               
+                onPressed: () {
+                  showModalBottomSheet<void> (
+                    context: context,
+                    builder: (BuildContext context) {
+                      return Container(
+                        height: 200,
+                        color: Colors.blueGrey,
+                        child: Container(
+                          decoration: const BoxDecoration(
+                            borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(30),
+                              topRight: Radius.circular(30),
+                            ),
+                          ),
+                          
+                        ),
+                      );
+                    }
+                  );
+                },
+                style: ElevatedButton.styleFrom(primary: Color.fromRGBO(255, 178, 0, 1)),
+              ),
+              ConstrainedBox(
+                constraints: const BoxConstraints.tightFor(width: 300),
+                child: Slider.adaptive(
+                  min: 20,
+                  max: 3000,
+                  value: seeds,
+                  onChanged: (newValue) {
+                    setState(() {
+                      seeds = newValue;
+                    });
+                  },
+                  activeColor: Color.fromRGBO(255, 203, 66, 1),
+                ),
+              ),
+            ],
+          ),
+        ),
+        bottomNavigationBar: BottomAppBar(
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: OverflowBar(
+            overflowAlignment: OverflowBarAlignment.center,
+            children: <Widget>[
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Container(
+                    margin: const EdgeInsets.all(8.0),
+                    child: ElevatedButton(
+                      child: const Text("cyan", style: TextStyle(color: Colors.black),),
+                      onPressed: () {
+                        setState(() {
+                          primaryColor = Colors.cyanAccent;
+                        });
+                      },
+                      style: ElevatedButton.styleFrom(primary: Colors.cyanAccent),
+                    ),
+                  ),
+                ],
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Container(
+                    margin: const EdgeInsets.all(8.0),
+                    child: ElevatedButton(
+                      child: const Text("yellow", style: TextStyle(color: Colors.black),),
+                      onPressed: () {
+                        setState(() {
+                          primaryColor = Colors.yellowAccent;
+                        });
+                      },
+                      style: ElevatedButton.styleFrom(primary: Colors.yellowAccent,
+                                                      side: const BorderSide(
+                                                        width: 1,
+                                                        color: Colors.black,
+                                                        style: BorderStyle.solid,
+                                                     )),
+                    ),
+                  ),
+                ],
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        width: 1,
+                        color: Colors.black,
+                      ),
+                    ),
+                    margin: const EdgeInsets.all(8.0),
+                    child: ElevatedButton(
+                      child: const Text("white"),
+                      onPressed: () {
+                        setState(() {
+                          primaryColor = Colors.white;
+                        });
+                      },
+                      style: ElevatedButton.styleFrom(primary: Colors.blueGrey),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+      ),
+    );
+  }
+}
